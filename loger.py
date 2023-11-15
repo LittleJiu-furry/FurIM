@@ -32,4 +32,4 @@ class Log:
         return self.createLogContent(loglevel,logContent)[0]
 
     def createLogContentOutToConsole(self, loglevel:int, logContent:str):
-        return self.createLogContent(loglevel,logContent)[1]
+        return self.createLogContent(loglevel,logContent)[1].replace("\\n","\n")

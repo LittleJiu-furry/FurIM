@@ -6,13 +6,13 @@ from . import sdk
 # 请勿删除以下内容
 _dec = ""
 _ver = ""
+event = sdk.EvnetDeal()
 # 请勿删除或修改以下方法
 
 # 初始化函数
 async def init(s):
     global server,event
     server = s
-    event = sdk.EvnetDeal()
     await pluginsInit()
 
 # 通知处理函数
@@ -41,4 +41,4 @@ async def pluginsInit():
 
 @event.registFunc(OPCODE.OP_AUTH)
 async def testFunc(version:int, data:bytes, path:str):
-    writeLog(LogLevel.Info,f"客户 {path} 发送了认证包")
+    writeLog(LogLevel.Info,f"客户 {path} 发送了认证包,认证数据如下:\n{data}")
