@@ -1,8 +1,9 @@
 import struct
 from hashlib import sha256
 import io
+import enum
 
-class Proto_Const:
+class Proto_Const():
     OP_AUTH = 0 # 认证
     OP_AUTH_REPLY = 1 # 认证回复
     OP_HEART = 2 # 心跳
@@ -44,16 +45,21 @@ class Proto:
         return data
 
     def unpack(self,data:bytes):
+        # 先判断长度是否正确
         if(len(data) < 56):
             raise Proto_Error("Cannot unpack in-data because its not a proto data")
+        # 构造成内存字节对象进行读写操作
         with io.BytesIO(data) as f:
-            header = bytes(struct.unpack(">16s",f.read(16))[0]).decode()
-            if(header != Proto_Const.HEAD_CONST):
+            # 取header
+            header = struct.unpack(">16s",f.read(16))[0]
+            _testHeader = struct.pack(">16s",Proto_Const.HEAD_CONST.encode())
+            if(header != _testHeader):
                 return None
             opcode = struct.unpack(">H",f.read(2))[0]
             version = struct.unpack(">H",f.read(2))[0]
             sign_flag = struct.unpack(">H",f.read(2))[0]
             sign_data = struct.unpack(">32s",f.read(32))[0]
+            # 数据校验
             if(self.__resign(data,sign_data) is False):
                 raise Proto_Error("Signature verification failed")
             data_flag = struct.unpack(">H",f.read(2))[0]

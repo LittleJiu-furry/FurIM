@@ -4,7 +4,8 @@ from fastapi.websockets import WebSocketState
 import uvicorn
 import loger
 import proto
-
+from pluginsLoader import Loader
+import traceback
 
 class Server:
     clients:dict[str,WebSocket] = {}
@@ -15,6 +16,7 @@ class Server:
         self.api.add_api_websocket_route("/{path}",self.__listen)
         self.app.include_router(self.api)
         self.log = loger.Log()
+        self.loader = Loader()
     
     # 连接维护函数
     async def __listen(self,ws:WebSocket,path:str):
@@ -37,30 +39,23 @@ class Server:
                     info = proto.Proto().unpack(data)
                     if(info):
                         opcode,version,data = info
-                        if(opcode == proto.Proto_Const.OP_AUTH_REPLY):
-                            # 收到认证返包，开启定时心跳
-                            pass
-                        elif(opcode == proto.Proto_Const.OP_HEART_REPLY):
-                            # 收到心跳返包
-                            pass
-                        elif(opcode == proto.Proto_Const.OP_MSG_RECV):
-                            # 接收到消息
-                            pass
-                        elif(opcode == proto.Proto_Const.OP_MSG_SEND_REPLY):
-                            # 接收到发送消息的回复包
-                            pass
-                        elif(opcode == proto.Proto_Const.OP_MSG_STATUS):
-                            # 接收到消息状态更新包
-                            pass
-                    
+                        # 将opcode，data，以及path传递到LoaderDeal里面，以便于loader下发事件到各个函数
 
-                    self.writeLog(loger.LogLevel.Info,info)
+                        # 这里是Server内部用于处理接收数据处理的部分
+                        if(opcode == proto.Proto_Const.OP_AUTH):
+                            # 客户端请求认证
+                            pass
+                        
+                    
+                        await self.loader.deal(opcode,version,data,path)
+                    
                 except RuntimeError:
                     self.writeLog(loger.LogLevel.Warning,"客户端发生错误")
                 except proto.Proto_Error:
                     self.writeLog(loger.LogLevel.Warning,"客户端发送数据错误")
                 except :
                     pass
+            await asyncio.sleep(0)
     
     # 运行服务器
     async def runServer(self):
